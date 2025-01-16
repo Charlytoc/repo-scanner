@@ -184,7 +184,7 @@ export const FileSystem = ({ repoMap }: { repoMap: TFileSystemItem[] }) => {
             <h4>Directories</h4>
             <div className="flex-x gap-small wrap-wrap">
               {Object.keys(groupByParentDirectory(repoMap)).map((key) => (
-                <button
+                <Button
                   className={`${
                     filters.directories.includes(key) ? "bg-accent" : ""
                   }`}
@@ -192,24 +192,24 @@ export const FileSystem = ({ repoMap }: { repoMap: TFileSystemItem[] }) => {
                   onClick={() => handleSelectDirectory(key)}
                 >
                   {key}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
         )}
       </div>
       <div className="flex-x gap-small justify-center">
-        <button onClick={() => setInnerRepoMap(repoMap)}>Reset</button>
-        <button
+        <Button onClick={() => setInnerRepoMap(repoMap)}>Reset</Button>
+        <Button
           onClick={() => {
             setInnerRepoMap(
               innerRepoMap.map((item) => ({ ...item, selected: true }))
             );
           }}
         >
-          Select all current items
-        </button>
-        <button
+          Select all
+        </Button>
+        <Button
           onClick={() => {
             setInnerRepoMap(
               innerRepoMap.map((item) => ({ ...item, selected: false }))
@@ -217,17 +217,18 @@ export const FileSystem = ({ repoMap }: { repoMap: TFileSystemItem[] }) => {
           }}
         >
           Select none
-        </button>
-        <button onClick={() => setShowFilters(!showFilters)}>
+        </Button>
+        <Button onClick={() => setShowFilters(!showFilters)}>
           {showFilters ? "Hide filters" : "Show filters"}
-        </button>
+        </Button>
       </div>
 
       <div className="flex-y gap-small padding-large">
-        <BulkActions
-          key={innerRepoMap.filter((item) => item.selected).length}
-          selectedItems={innerRepoMap.filter((item) => item.selected)}
-        />
+        {innerRepoMap.filter((item) => item.selected).length > 0 && (
+          <BulkActions
+            selectedItems={innerRepoMap.filter((item) => item.selected)}
+          />
+        )}
         {renderGroupedItems(groupedRepoMap)}
       </div>
     </div>
@@ -296,13 +297,13 @@ export const File = ({
       <p>{item.name}</p>
       {item.download_url && (
         <div className="flex-x gap-small">
-          <button
+          <Button
             onClick={() => window.open(item.download_url || "", "_blank")}
-            disabled={!item.download_url}
           >
             Open
-          </button>
-          <button onClick={handleEdit}>Edit</button>
+          </Button>
+
+          <Button onClick={handleEdit}>Edit</Button>
           <Modal visible={visible} close={() => setVisible(false)}>
             <Editor
               name={item.name}
@@ -433,19 +434,17 @@ const BulkActions = ({
   const handleGenerateDescription = async () => {
     console.log("selectedItems", selectedItems);
 
+    if (!auth.rigobot_token) {
+      toast.error("No Rigobot token provided");
+      return;
+    }
+
     const files = await Promise.all(
       selectedItems.map(async (item) => {
         const originalContent = await fetchFileContent(item.download_url || "");
         const { frontmatter, content: body } =
           extractFrontMatter(originalContent);
 
-        console.log("frontmatter", frontmatter, item.path);
-        console.log("------------------");
-        console.log("body", body);
-        console.log("------------------");
-        console.log("originalContent", originalContent);
-
-        console.log("Processing file", item.path);
         const TARGET_DESCRIPTION_LENGTH = 150;
         let shouldGenerateDescription = false;
 
@@ -471,11 +470,6 @@ const BulkActions = ({
         }
 
         if (shouldGenerateDescription) {
-          if (!auth.rigobot_token) {
-            toast.error("No Rigobot token provided");
-            return;
-          }
-
           const rigoResponse = await generateAIDescription(auth.rigobot_token, {
             title: frontmatter.title || "PATH: " + item.path,
             content: originalContent,
@@ -489,8 +483,10 @@ const BulkActions = ({
             body,
             newContent,
           };
+        } else {
+          console.log("No need to generate description for", item.path);
+          return null;
         }
-        return null;
       })
     );
 
@@ -533,7 +529,7 @@ const BulkActions = ({
   };
 
   return (
-    <div className="flex-y gap-small justify-center">
+    <div className="flex-y gap-small justify-center bordered padding-large rounded-small">
       <h3>Bulk actions</h3>
       <div className="flex-x gap-small align-center">
         <p>{selectedItems.length} selected</p>

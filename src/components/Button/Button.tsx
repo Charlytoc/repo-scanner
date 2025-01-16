@@ -1,9 +1,15 @@
 export const Button = ({
   children,
   onClick,
+  className,
 }: {
   children: React.ReactNode;
   onClick: () => void;
+  className?: string;
 }) => {
-  return <button onClick={onClick}>{children}</button>;
+  return (
+    <button className={`button ${className}`} onClick={onClick}>
+      {children}
+    </button>
+  );
 };

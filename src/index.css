@@ -41,7 +41,7 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+/* button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -58,7 +58,7 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
-}
+} */
 
 input {
   border-radius: 8px;
@@ -156,4 +156,20 @@ input {
 
 .text-muted {
   color: #888;
+}
+
+.button {
+  background-color: #1a1a1a;
+  border: 1px solid rgb(148, 148, 148);
+  color: white;
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+
+.button:hover {
+  background-color: var(--accent-color);
+}
+.button:disabled {
+  background-color: #888;
+  cursor: not-allowed;
 }

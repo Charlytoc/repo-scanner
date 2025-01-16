@@ -8,23 +8,6 @@ export const debounce = (func: Function, wait: number) => {
   };
 };
 
-export const generateDescription = async (body: string) => {
-  //   const response = await fetch(
-  //     "https://api.openai.com/v1/engines/davinci-codex/completions",
-  //     {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-  //       },
-  //       body: JSON.stringify({
-  //         prompt: `Generate a description for the following markdown content: ${body}`,
-  //         max_tokens: 100,
-  //       }),
-  //     }
-  //   );
-  return "test";
-};
 
 const RIGOBOT_HOST = "https://rigobot.herokuapp.com";
 export const generateAIDescription = async (
