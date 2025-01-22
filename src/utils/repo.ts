@@ -10,7 +10,13 @@ export const extendItems = (items: TFileSystemItem[]) => {
   }));
 };
 
-export const buildRepoMap = async ({ githubUrl }: { githubUrl: string }) => {
+export const buildRepoMap = async ({
+  githubUrl,
+  token,
+}: {
+  githubUrl: string;
+  token: string;
+}) => {
   const repoMatch = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
 
   if (!repoMatch) {
@@ -19,40 +25,42 @@ export const buildRepoMap = async ({ githubUrl }: { githubUrl: string }) => {
 
   const [_, owner, repo] = repoMatch;
 
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents`;
+  const octokit = new Octokit({
+    auth: token,
+  });
 
-  const fetchFiles = async (url: string): Promise<any[]> => {
+  const fetchFiles = async (path: string = ""): Promise<any[]> => {
     try {
-      const response = await axios.get(url, {
-        headers: {
-          Accept: "application/vnd.github.v3+json",
-        },
+      const { data } = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
       });
 
       const files: any[] = [];
 
-      for (const file of response.data) {
+      for (const file of Array.isArray(data) ? data : [data]) {
         if (file.type === "dir") {
-          // Llama recursivamente para explorar el directorio
-          const subFiles = await fetchFiles(file.url);
+          // Recursively fetch directory contents
+          const subFiles = await fetchFiles(file.path);
           files.push(...subFiles);
         } else {
-          files.push(file); // Usa directamente el `path` de la API
+          files.push(file); // Add file to the list
         }
       }
 
       return files;
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("Error:", error.message);
-      } else {
-        console.error("Unknown error occurred");
-      }
+    } catch (error) {
+      console.error(
+        "Error fetching repository contents:",
+        // @ts-ignore
+        error.response?.data || error.message
+      );
       throw error;
     }
   };
 
-  const files = await fetchFiles(apiUrl);
+  const files = await fetchFiles();
   return extendItems(files);
 };
 
@@ -119,6 +127,10 @@ export const extractFrontMatter = (
 };
 
 const removeFrontMatter = (fileContent: string) => {
+  // Check if the file content starts with ---
+  if (!fileContent.startsWith("---")) {
+    return fileContent;
+  }
   let newFileContent = fileContent.replace(/^---\n(.*)\n---\n/, "");
   return newFileContent;
 };
@@ -128,12 +140,10 @@ export const insertFrontMatter = (fileContent: string, frontmatter: any) => {
   const contentAfterInsert = `${newFrontMatter}${removeFrontMatter(
     fileContent
   )}`;
-  // console.table({
-  //   before: fileContent,
-  //   after: contentAfterInsert,
-  // });
+
   return contentAfterInsert;
 };
+
 /**
  * Commits multiple file changes to a GitHub repository.
  *
@@ -237,4 +247,76 @@ export const commitMultipleFilesToGitHub = async ({
       error.response?.data || error.message
     );
   }
+};
+
+export const getUserProfile = async (token: string) => {
+  const octokit = new Octokit({
+    auth: token,
+  });
+  try {
+    const { data } = await octokit.rest.users.getAuthenticated();
+    return data;
+  } catch (error) {
+    console.error("Error al obtener el perfil:", error);
+  }
+};
+
+const extractPropertiesFromUrl = (url: string) => {
+  const repoMatch = url.match(/github\.com\/([^/]+)\/([^/]+)/);
+  if (!repoMatch) {
+    throw new Error("Invalid GitHub URL");
+  }
+  const [_, owner, repo] = repoMatch;
+  return { owner, repo };
+};
+
+/**
+ * Fetches all branches of a GitHub repository.
+ *
+ * @param owner - The owner of the repository (username or organization).
+ * @param repo - The name of the repository.
+ * @param token - Your GitHub personal access token.
+ * @returns An array of branch names.
+ * @throws Error if the request fails.
+ */
+export const getBranches = async ({
+  repoUrl,
+  token,
+}: {
+  repoUrl: string;
+  token: string;
+}): Promise<
+  {
+    name: string;
+    commit: { sha: string; url: string };
+    selected: boolean;
+  }[]
+> => {
+  const octokit = new Octokit({
+    auth: token,
+  });
+
+  const { owner, repo } = extractPropertiesFromUrl(repoUrl);
+
+  try {
+    const { data } = await octokit.rest.repos.listBranches({
+      owner,
+      repo,
+    });
+
+    return data.map((branch) => ({
+      name: branch.name,
+      commit: branch.commit,
+      selected: false,
+    }));
+  } catch (error) {
+    console.error("Error fetching branches:", error);
+    throw error;
+  }
+};
+
+export const getOwnerFromUrl = (url: string) => {
+  const urlObj = new URL(url);
+  const owner = urlObj.pathname.split("/")[1];
+  return owner;
 };

@@ -1,23 +1,17 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router";
-import {
-  FileSystem,
-  TFileSystemItem,
-} from "../../components/FileSystem/FileSystem";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router";
+import { FileSystem } from "../../components/FileSystem/FileSystem";
 import { StorageManager } from "../../utils/storage";
 import { useStore } from "../../utils/store";
 import { useShallow } from "zustand/shallow";
-
-const getOwnerFromUrl = (url: string) => {
-  const urlObj = new URL(url);
-  const owner = urlObj.pathname.split("/")[1];
-  return owner;
-};
+import { Navbar } from "../../components/Navbar/Navbar";
 
 export default function Repo() {
   const { repoUrlB64 } = useParams();
-  const { setRepo } = useStore(
+  const navigate = useNavigate();
+  const { setRepo, repo } = useStore(
     useShallow((state) => ({
+      repo: state.repo,
       setRepo: state.setRepo,
     }))
   );
@@ -25,19 +19,22 @@ export default function Repo() {
   if (!repoUrlB64) return null;
 
   const repoUrl = atob(repoUrlB64);
-  const [repoMap, setRepoMap] = useState<TFileSystemItem[]>([]);
 
   useEffect(() => {
-    const cachedRepoMap = StorageManager.get(`repoMap-${repoUrl}`);
-    if (cachedRepoMap) {
-      setRepoMap(cachedRepoMap);
+    if (repo.owner === "" && repo.url === "") {
+      const cachedRepo = StorageManager.get(`repo-${repoUrl}`);
+      if (cachedRepo) {
+        setRepo(cachedRepo);
+      } else {
+        navigate("/");
+      }
     }
-    setRepo({
-      owner: getOwnerFromUrl(repoUrl),
-      url: repoUrl,
-      branch: "master",
-    });
-  }, [repoUrl, setRepo]);
+  }, [repoUrl, setRepo, repo]);
 
-  return <FileSystem repoMap={repoMap} />;
+  return (
+    <>
+      <Navbar />
+      <FileSystem />
+    </>
+  );
 }
