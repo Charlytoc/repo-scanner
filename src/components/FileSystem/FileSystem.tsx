@@ -36,10 +36,9 @@ export type TFileSystemItem = {
   selected: boolean;
 };
 export const FileSystem = () => {
-  const { repo, fetchRepo } = useStore(
+  const { repo } = useStore(
     useShallow((state) => ({
       repo: state.repo,
-      fetchRepo: state.fetchRepo,
     }))
   );
 
@@ -587,6 +586,27 @@ const RegenerateDescriptionModal = ({
               }
             );
             frontmatter.description = rigoResponse.answer;
+
+            // if it has subtitle, remove it
+            if (frontmatter.subtitle) {
+              frontmatter.subtitle = undefined;
+            }
+            if (frontmatter.textColor) {
+              frontmatter.textColor = undefined;
+            }
+
+            if (frontmatter.cover_local) {
+              frontmatter.cover_local = undefined;
+            }
+
+            if (frontmatter.status) {
+              frontmatter.status = undefined;
+            }
+
+            if (frontmatter.date) {
+              frontmatter.date = undefined;
+            }
+
             const newContent = insertFrontMatter(body, frontmatter);
 
             return {
