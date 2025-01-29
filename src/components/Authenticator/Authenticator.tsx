@@ -65,8 +65,13 @@ export const Authenticator = () => {
               />
               <span className="text-small">
                 You can generate a token{" "}
-                <a href="https://github.com/settings/tokens/new">here</a>. Make
-                sure to select all the "Repo" permissions.
+                <a
+                  target="_blank"
+                  href="https://github.com/settings/tokens/new"
+                >
+                  here
+                </a>
+                . Make sure to select all the "Repo" permissions.
               </span>
             </section>
             {user.avatar_url && (

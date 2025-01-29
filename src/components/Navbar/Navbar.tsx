@@ -20,7 +20,12 @@ export const Navbar = () => {
   return (
     <div className="flex-x justify-between align-center padding-large bg-secondary">
       <h2>RepoScanner</h2>
-      <Authenticator />
+      <div className="flex-x align-center">
+        <a target="_blank" href="https://www.youtube.com/watch?v=E8vvhuaORkY">
+          Watch the tutorial
+        </a>
+        <Authenticator />
+      </div>
     </div>
   );
 };
